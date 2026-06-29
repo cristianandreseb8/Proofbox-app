@@ -7,12 +7,13 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0f0e0c;--surface:#1a1815;--border:#2e2b26;--amber:#d4820e;--amber-l:#f0a832;--amber-d:#7a4a08;--red:#c0392b;--blue:#2980b9;--green:#27ae60;--text:#e8e2d6;--muted:#7a7268}
 body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh}
-.app{max-width:400px;margin:0 auto;padding:16px 12px 48px}
-.header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 18px}
+.app{max-width:400px;margin:0 auto;padding:16px 12px 80px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px}
 .logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;letter-spacing:.04em}
 .logo span{color:var(--amber)}
 .status-row{display:flex;align-items:center;gap:6px;font-size:11px}
@@ -34,8 +35,6 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .step-btn{width:28px;height:28px;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:5px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .step-btn:active{background:var(--amber-d)}
 .step-btn.c:active{background:#1a5f8a}
-
-/* Controles con candado */
 .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ctrl-btn{padding:16px 8px;border-radius:12px;border:2px solid var(--border);background:var(--bg);cursor:pointer;text-align:center;position:relative;transition:all .2s}
 .ctrl-btn:active{transform:scale(.96)}
@@ -47,23 +46,17 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .ctrl-st{font-size:10px;margin-top:3px;color:var(--muted)}
 .ctrl-btn.on-heat .ctrl-st{color:var(--amber)}
 .ctrl-btn.on-cool .ctrl-st{color:#5dade2}
-/* Candado badge */
 .lock-badge{position:absolute;top:8px;right:8px;font-size:14px;display:none}
 .ctrl-btn.locked .lock-badge{display:block}
-/* Botón unlock */
 .unlock-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:none}
 .unlock-row.show{display:flex}
 .unlock-btn{padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px}
 .unlock-btn:active{border-color:var(--green);color:var(--green)}
-/* Banner frío automático */
 .banner{border-radius:8px;padding:10px 12px;margin-top:10px;font-size:11px;display:none}
 .banner.cold-wait{background:rgba(39,174,96,.1);border:1px solid #1a6b3a;color:var(--green)}
-
-/* Modo toggle */
 .mode-toggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:12px}
 .mode-btn{padding:8px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s}
 .mode-btn.active{background:var(--surface);color:var(--amber-l);border:1px solid var(--amber-d)}
-/* Meta */
 .track{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;border:1px solid var(--border)}
 .fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--amber-d),var(--amber-l));transition:width .8s ease}
 .fill.done{background:linear-gradient(90deg,#1a6b3a,var(--green))}
@@ -93,190 +86,359 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-
 .sensor-item{text-align:center;padding:10px 4px;background:var(--bg);border-radius:8px;border:1px solid var(--border)}
 .sensor-val{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
 .sensor-lbl{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-.reset-btn{width:100%;padding:8px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;margin-top:8px}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:500;z-index:999;display:none;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:320px}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--amber);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;z-index:999;display:none;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:320px}
 .toast.show{display:block;animation:toastIn .3s ease}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+/* NAV TABS */
+.nav-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);margin-bottom:0;position:sticky;top:0;z-index:90}
+.nav-tab{flex:1;padding:10px 4px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;text-align:center}
+.nav-tab.active{color:var(--amber-l);border-bottom-color:var(--amber)}
+.tab-panel{display:none;padding-top:4px}
+.tab-panel.active{display:block}
+/* GROWTH METRICS */
+.growth-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.growth-chip{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.growth-chip .gv{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--amber-l)}
+.growth-chip .gl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+/* TIMERS */
+.timer-display{font-family:'Syne',sans-serif;font-size:36px;font-weight:700;text-align:center;color:var(--text);letter-spacing:2px;margin:6px 0}
+.timer-display.alarm-ring{color:var(--red);animation:ring-blink .5s infinite alternate}
+@keyframes ring-blink{from{opacity:1}to{opacity:.2}}
+.timer-row{display:flex;gap:8px;align-items:center}
+.timer-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;min-width:0}
+.timer-input:focus{border-color:var(--amber)}
+.btn-sm{padding:8px 12px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn-sm:active{background:var(--amber-d)}
+.btn-sm.primary{background:var(--amber-d);border-color:var(--amber);color:var(--amber-l)}
+.btn-sm.danger{background:rgba(192,57,43,.12);border-color:rgba(192,57,43,.4);color:var(--red)}
+.btn-sm.muted-btn{color:var(--muted)}
+.uptime-local{font-family:'Syne',sans-serif;font-size:18px;font-weight:600;color:var(--text);margin:4px 0;text-align:center}
+.reset-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+/* CHARTS TAB */
+.chart-wrap{position:relative;height:180px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:10px}
+.chart-wrap canvas{display:block}
+.session-row{display:flex;gap:8px;margin-bottom:8px}
+.session-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;min-width:0}
+.session-inp:focus{border-color:var(--amber)}
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.hist-info .hi-name{font-size:12px;color:var(--text)}
+.hist-info .hi-date{font-size:10px;color:var(--muted);margin-top:2px}
+.hist-actions{display:flex;gap:6px}
+.btn-xs{padding:4px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer}
+.btn-xs.del{border-color:rgba(192,57,43,.3);color:var(--red)}
+.log-count{font-size:10px;color:var(--muted);margin-top:4px}
+/* PROGRAMS TAB */
+.prog-running-card{background:rgba(212,130,14,.07);border:1px solid rgba(212,130,14,.3);border-radius:12px;padding:14px;margin-bottom:12px;display:none}
+.prog-running-card.show{display:block}
+.prog-run-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--amber-l);margin-bottom:8px}
+.prog-run-info{font-size:11px;color:var(--muted);margin-bottom:4px}
+.prog-run-info span{color:var(--text)}
+.stage-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px}
+.stage-item.active-stage{border-color:var(--amber)}
+.stage-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stage-num-lbl{font-size:10px;color:var(--muted)}
+.stage-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stage-inp{background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:5px 8px;outline:none;min-width:0}
+.stage-inp:focus{border-color:var(--amber)}
+.stage-inp.w60{width:60px}
+.stage-inp.w70{width:70px}
+.stage-sel{background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:5px 8px;outline:none}
+.prog-item{display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.prog-item-info .pi-name{font-size:12px;color:var(--text)}
+.prog-item-info .pi-stages{font-size:10px;color:var(--muted);margin-top:2px}
+.prog-item-actions{display:flex;gap:6px}
+.empty-state{text-align:center;color:var(--muted);font-size:11px;padding:20px 0}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+.divider{height:1px;background:var(--border);margin:10px 0}
 </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
 <div class="app">
-
-  <div class="header">
-    <div class="logo">Proof<span>Box</span></div>
-    <div class="status-row">
-      <div class="dot" id="dot"></div>
-      <span id="status-txt" style="color:var(--red)">Conectando...</span>
-    </div>
-  </div>
-
-  <div class="mode-badge heat" id="mode-badge">🔥 Modo Fermentación</div>
-
-  <!-- Temperatura -->
-  <div class="card">
-    <div class="card-label">Temperatura</div>
-    <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:700;text-align:center;margin-bottom:4px">
-      <span id="temp-big" style="color:var(--amber-l)">--</span><sup style="font-size:20px;color:var(--amber)">°</sup>
-    </div>
-    <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px" id="temp-mode-lbl">actual</div>
-    <div class="temp-grid">
-      <div class="temp-col" id="col-heat">
-        <div class="temp-col-label">🔥 Objetivo calor</div>
-        <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--amber-l);margin:4px 0">
-          <span id="target-heat">--</span><span style="font-size:13px;color:var(--amber)">°</span>
-        </div>
-        <div class="stepper-sm">
-          <button class="step-btn" onclick="adjTemp('heat',-0.5)">−</button>
-          <button class="step-btn" onclick="adjTemp('heat',+0.5)">+</button>
-        </div>
-      </div>
-      <div class="temp-col" id="col-cold">
-        <div class="temp-col-label">❄️ Objetivo frío</div>
-        <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:#5dade2;margin:4px 0">
-          <span id="target-cold">--</span><span style="font-size:13px;color:#2980b9">°</span>
-        </div>
-        <div class="stepper-sm">
-          <button class="step-btn c" onclick="adjTemp('cold',-0.5)">−</button>
-          <button class="step-btn c" onclick="adjTemp('cold',+0.5)">+</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modo -->
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="mode-ratio" onclick="setDMode('ratio')">📈 Modo Ratio ×</button>
-    <button class="mode-btn" id="mode-meta" onclick="setDMode('meta')">🎯 Modo Meta</button>
-  </div>
-
-  <!-- Ratio -->
-  <div id="panel-ratio" class="card">
-    <div class="rise-head">
-      <div class="card-label" style="margin:0">Crecimiento</div>
-      <div><span class="rise-val" id="rise">--</span><span class="rise-x">×</span></div>
-    </div>
-    <div class="track"><div class="fill" id="bar-ratio" style="width:0%"></div></div>
-    <div class="marks"><span>1×</span><span>1.5×</span><span>2×</span><span>2.5×</span><span>3×</span></div>
-    <button class="cal-btn" onclick="sendCmd({cmd:'calibrate'})">⬛ Calibrar punto cero</button>
-  </div>
-
-  <!-- Meta -->
-  <div id="panel-meta" style="display:none">
-    <div class="card">
-      <div class="card-label">Progreso</div>
-      <div class="meta-big" id="meta-pct">--<span>%</span></div>
-      <div class="meta-ratio-row">
-        <span style="color:var(--text)">Ahora: <b id="meta-ratio-now">--×</b></span>
-        <span style="color:var(--muted)">Meta: <b id="meta-ratio-goal">--×</b></span>
-      </div>
-      <div class="track"><div class="fill" id="bar-meta" style="width:0%"></div></div>
-      <div class="marks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
-    </div>
-    <div class="card">
-      <div class="card-label">Definir inicio</div>
-      <div class="grams-row">
-        <span style="font-size:11px;color:var(--muted);flex:1">Gramos <span style="color:var(--amber)">(opcional)</span></span>
-        <input class="num-input" type="number" id="input-grams" placeholder="100" style="width:70px;flex:none">
-        <span class="unit-lbl">g</span>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">¿Cómo marcas el inicio?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <button class="mark-btn" id="btn-start-sensor" onclick="markStart()">📏 Sensor<br><span style="font-size:10px;color:var(--muted)">Masa ya puesta</span></button>
-        <button class="mark-btn" id="btn-start-finger" onclick="markStart()">🖐 Con el dedo<br><span style="font-size:10px;color:var(--muted)">Cualquier nivel</span></button>
-      </div>
-      <div id="start-status" style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center"></div>
-    </div>
-    <div class="card">
-      <div class="card-label">Definir meta</div>
-      <div class="goal-tabs">
-        <button class="gtab active" id="gtab-finger" onclick="setGoalTab('finger')">🖐 Dedo</button>
-        <button class="gtab" id="gtab-ratio" onclick="setGoalTab('ratio')">✖️ Ratio</button>
-        <button class="gtab" id="gtab-cm" onclick="setGoalTab('cm')">📐 cm</button>
-      </div>
-      <div id="goal-finger">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Tapa el sensor donde quieres que llegue la masa</div>
-        <button class="mark-btn" id="btn-goal-finger" onclick="setGoalFinger()" style="width:100%">🖐 Marcar meta con el dedo</button>
-      </div>
-      <div id="goal-ratio" style="display:none">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">¿Cuántas veces debe crecer?</div>
-        <div class="input-row">
-          <input class="num-input" type="number" id="input-ratio" placeholder="2.7" step="0.1" min="1.1" max="5">
-          <span class="unit-lbl">×</span>
-          <button class="mark-btn" onclick="setGoalRatio()">Aplicar</button>
-        </div>
-      </div>
-      <div id="goal-cm" style="display:none">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">¿Cuántos cm debe subir la masa?</div>
-        <div class="input-row">
-          <input class="num-input" type="number" id="input-cm" placeholder="5" step="0.5" min="0.5">
-          <span class="unit-lbl">cm</span>
-          <button class="mark-btn" onclick="setGoalCm()">Aplicar</button>
-        </div>
-      </div>
-      <div id="goal-status" style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center"></div>
-      <button class="reset-small" onclick="resetMeta()">↺ Resetear meta</button>
-    </div>
-  </div>
-
-  <!-- Controles -->
-  <div class="card">
-    <div class="card-label">Controles</div>
-    <div class="ctrl-grid">
-      <button class="ctrl-btn" id="btn-heat" onclick="sendCmd({cmd:'heat'})">
-        <span class="lock-badge">🔒</span>
-        <i class="ti ti-flame ctrl-icon hi"></i>
-        <div class="ctrl-name">Calor</div>
-        <div class="ctrl-st" id="heat-st">APAGADO</div>
-      </button>
-      <button class="ctrl-btn" id="btn-cool" onclick="sendCmd({cmd:'cool'})">
-        <span class="lock-badge">🔒</span>
-        <i class="ti ti-snowflake ctrl-icon ci"></i>
-        <div class="ctrl-name">Frío</div>
-        <div class="ctrl-st" id="cool-st">APAGADO</div>
-      </button>
-    </div>
-
-    <!-- Quitar candado -->
-    <div class="unlock-row" id="unlock-row">
-      <span style="font-size:11px;color:var(--muted)">Control manual activo</span>
-      <button class="unlock-btn" onclick="sendCmd({cmd:'unlock'})">🔓 Volver a automático</button>
-    </div>
-
-    <!-- Banner transición frío -->
-    <div class="banner cold-wait" id="banner-coldwait">
-      ⏳ Meta alcanzada — modo frío en <b id="cold-countdown">--</b>
-    </div>
-  </div>
-
-  <!-- Info -->
-  <div class="card">
-    <div class="card-label">Info</div>
-    <div class="sensor-row">
-      <div class="sensor-item"><div class="sensor-val" id="dist">--</div><div class="sensor-lbl">Distancia</div></div>
-      <div class="sensor-item"><div class="sensor-val" id="uptime">--</div><div class="sensor-lbl">Tiempo</div></div>
-      <div class="sensor-item"><div class="sensor-val" id="rssi">--</div><div class="sensor-lbl">WiFi</div></div>
-    </div>
-    <button class="reset-btn" onclick="if(confirm('¿Resetear WiFi?'))sendCmd({cmd:'resetwifi'})">⚙ Cambiar red WiFi</button>
-  </div>
-
+<div class="header">
+<div class="logo">Proof<span>Box</span></div>
+<div class="status-row">
+<div class="dot" id="dot"></div>
+<span id="status-txt" style="color:var(--red)">Conectando...</span>
+</div>
+</div>
+<nav class="nav-tabs">
+<button class="nav-tab active" onclick="switchTab('control')">🌡️ Control</button>
+<button class="nav-tab" onclick="switchTab('charts')">📈 Gráficos</button>
+<button class="nav-tab" onclick="switchTab('programs')">⚙️ Programas</button>
+</nav>
+<!-- ========== TAB: CONTROL ========== -->
+<div class="tab-panel active" id="tab-control">
+<div class="mode-badge heat" id="mode-badge">🔥 Modo Fermentación</div>
+<!-- Temperatura -->
+<div class="card">
+<div class="card-label">Temperatura</div>
+<div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:700;text-align:center;margin-bottom:4px">
+<span id="temp-big" style="color:var(--amber-l)">--</span><sup style="font-size:20px;color:var(--amber)">°</sup>
+</div>
+<div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:10px" id="temp-mode-lbl">actual</div>
+<!-- Growth metrics -->
+<div class="growth-row">
+<div class="growth-chip">
+<div class="gv" id="rise-chip">--×</div>
+<div class="gl">Ratio actual</div>
+</div>
+<div class="growth-chip">
+<div class="gv" id="cm-chip">-- cm</div>
+<div class="gl">Crecidos</div>
+</div>
+</div>
+<div class="temp-grid">
+<div class="temp-col" id="col-heat">
+<div class="temp-col-label">🔥 Objetivo calor</div>
+<div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--amber-l);margin:4px 0">
+<span id="target-heat">--</span><span style="font-size:13px;color:var(--amber)">°</span>
+</div>
+<div class="stepper-sm">
+<button class="step-btn" onclick="adjTemp('heat',-0.5)">−</button>
+<button class="step-btn" onclick="adjTemp('heat',+0.5)">+</button>
+</div>
+</div>
+<div class="temp-col" id="col-cold">
+<div class="temp-col-label">❄️ Objetivo frío</div>
+<div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:#5dade2;margin:4px 0">
+<span id="target-cold">--</span><span style="font-size:13px;color:#2980b9">°</span>
+</div>
+<div class="stepper-sm">
+<button class="step-btn c" onclick="adjTemp('cold',-0.5)">−</button>
+<button class="step-btn c" onclick="adjTemp('cold',+0.5)">+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Modo -->
+<div class="mode-toggle">
+<button class="mode-btn active" id="mode-ratio" onclick="setDMode('ratio')">📈 Modo Ratio ×</button>
+<button class="mode-btn" id="mode-meta" onclick="setDMode('meta')">🎯 Modo Meta</button>
+</div>
+<!-- Ratio -->
+<div id="panel-ratio" class="card">
+<div class="rise-head">
+<div class="card-label" style="margin:0">Crecimiento</div>
+<div><span class="rise-val" id="rise">--</span><span class="rise-x">×</span></div>
+</div>
+<div class="track"><div class="fill" id="bar-ratio" style="width:0%"></div></div>
+<div class="marks"><span>1×</span><span>1.5×</span><span>2×</span><span>2.5×</span><span>3×</span></div>
+<button class="cal-btn" onclick="sendCmd({cmd:'calibrate'})">⬛ Calibrar punto cero</button>
+</div>
+<!-- Meta -->
+<div id="panel-meta" style="display:none">
+<div class="card">
+<div class="card-label">Progreso</div>
+<div class="meta-big" id="meta-pct">--<span>%</span></div>
+<div class="meta-ratio-row">
+<span style="color:var(--text)">Ahora: <b id="meta-ratio-now">--×</b></span>
+<span style="color:var(--muted)">Meta: <b id="meta-ratio-goal">--×</b></span>
+</div>
+<div class="track"><div class="fill" id="bar-meta" style="width:0%"></div></div>
+<div class="marks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+</div>
+<div class="card">
+<div class="card-label">Definir inicio</div>
+<div class="grams-row">
+<span style="font-size:11px;color:var(--muted);flex:1">Gramos <span style="color:var(--amber)">(opcional)</span></span>
+<input class="num-input" type="number" id="input-grams" placeholder="100" style="width:70px;flex:none">
+<span class="unit-lbl">g</span>
+</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:8px">¿Cómo marcas el inicio?</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button class="mark-btn" id="btn-start-sensor" onclick="markStart()">📏 Sensor<br><span style="font-size:10px;color:var(--muted)">Masa ya puesta</span></button>
+<button class="mark-btn" id="btn-start-finger" onclick="markStart()">🖐 Con el dedo<br><span style="font-size:10px;color:var(--muted)">Cualquier nivel</span></button>
+</div>
+<div id="start-status" style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center"></div>
+</div>
+<div class="card">
+<div class="card-label">Definir meta</div>
+<div class="goal-tabs">
+<button class="gtab active" id="gtab-finger" onclick="setGoalTab('finger')">🖐 Dedo</button>
+<button class="gtab" id="gtab-ratio" onclick="setGoalTab('ratio')">✖️ Ratio</button>
+<button class="gtab" id="gtab-cm" onclick="setGoalTab('cm')">📐 cm</button>
+</div>
+<div id="goal-finger">
+<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Tapa el sensor donde quieres que llegue la masa</div>
+<button class="mark-btn" id="btn-goal-finger" onclick="setGoalFinger()" style="width:100%">🖐 Marcar meta con el dedo</button>
+</div>
+<div id="goal-ratio" style="display:none">
+<div style="font-size:11px;color:var(--muted);margin-bottom:8px">¿Cuántas veces debe crecer?</div>
+<div class="input-row">
+<input class="num-input" type="number" id="input-ratio" placeholder="2.7" step="0.1" min="1.1" max="5">
+<span class="unit-lbl">×</span>
+<button class="mark-btn" onclick="setGoalRatio()">Aplicar</button>
+</div>
+</div>
+<div id="goal-cm" style="display:none">
+<div style="font-size:11px;color:var(--muted);margin-bottom:8px">¿Cuántos cm debe subir la masa?</div>
+<div class="input-row">
+<input class="num-input" type="number" id="input-cm" placeholder="5" step="0.5" min="0.5">
+<span class="unit-lbl">cm</span>
+<button class="mark-btn" onclick="setGoalCm()">Aplicar</button>
+</div>
+</div>
+<div id="goal-status" style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center"></div>
+<button class="reset-small" onclick="resetMeta()">↺ Resetear meta</button>
+</div>
+</div>
+<!-- Controles manuales -->
+<div class="card">
+<div class="card-label">Controles</div>
+<div class="ctrl-grid">
+<button class="ctrl-btn" id="btn-heat" onclick="sendCmd({cmd:'heat'})">
+<span class="lock-badge">🔒</span>
+<i class="ti ti-flame ctrl-icon hi"></i>
+<div class="ctrl-name">Calor</div>
+<div class="ctrl-st" id="heat-st">APAGADO</div>
+</button>
+<button class="ctrl-btn" id="btn-cool" onclick="sendCmd({cmd:'cool'})">
+<span class="lock-badge">🔒</span>
+<i class="ti ti-snowflake ctrl-icon ci"></i>
+<div class="ctrl-name">Frío</div>
+<div class="ctrl-st" id="cool-st">APAGADO</div>
+</button>
+</div>
+<div class="unlock-row" id="unlock-row">
+<span style="font-size:11px;color:var(--muted)">Control manual activo</span>
+<button class="unlock-btn" onclick="sendCmd({cmd:'unlock'})">🔓 Volver a automático</button>
+</div>
+<div class="banner cold-wait" id="banner-coldwait">
+⏳ Meta alcanzada — modo frío en <b id="cold-countdown">--</b>
+</div>
+</div>
+<!-- Timers -->
+<div class="card">
+<div class="card-label">Uptime dispositivo</div>
+<div class="uptime-local" id="uptime-device">--</div>
+<div class="divider"></div>
+<div class="card-label">Timer local</div>
+<div class="uptime-local" id="uptime-local-display">00:00:00</div>
+<div class="divider"></div>
+<div class="card-label">Alarma cuenta regresiva</div>
+<div class="timer-display" id="alarm-display">00:00</div>
+<div class="timer-row" style="margin-bottom:8px">
+<input class="timer-input" type="number" id="alarm-mins" placeholder="minutos" min="1" max="999">
+<button class="btn-sm primary" id="alarm-btn" onclick="alarmToggle()">▶ Iniciar</button>
+<button class="btn-sm" id="sound-btn" onclick="toggleSound()" title="Silencio">🔔</button>
+</div>
+<div class="reset-row">
+<button class="btn-sm danger" onclick="doResetGeneral()">🔄 Reset general</button>
+<button class="btn-sm muted-btn" onclick="doResetTimer()">⏱ Reset timer</button>
+</div>
+</div>
+<!-- Info -->
+<div class="card">
+<div class="card-label">Info</div>
+<div class="sensor-row">
+<div class="sensor-item"><div class="sensor-val" id="dist">--</div><div class="sensor-lbl">Distancia</div></div>
+<div class="sensor-item"><div class="sensor-val" id="uptime">--</div><div class="sensor-lbl">Uptime HW</div></div>
+<div class="sensor-item"><div class="sensor-val" id="rssi">--</div><div class="sensor-lbl">WiFi</div></div>
+</div>
+<button class="reset-small" onclick="if(confirm('¿Resetear WiFi?'))sendCmd({cmd:'resetwifi'})">⚙ Cambiar red WiFi</button>
+</div>
+</div>
+<!-- ========== TAB: GRÁFICOS ========== -->
+<div class="tab-panel" id="tab-charts">
+<div class="card">
+<div class="card-label">Sesión actual</div>
+<div class="session-row">
+<input class="session-inp" type="text" id="session-name" placeholder="Nombre sesión (ej: Pan de trigo)">
+<button class="btn-sm primary" onclick="saveSession()">💾 Guardar</button>
+</div>
+<div style="display:flex;gap:8px">
+<button class="btn-sm" style="flex:1" onclick="exportCSV()">⬇ CSV</button>
+<button class="btn-sm" style="flex:1" onclick="clearLog()">🗑 Limpiar</button>
+</div>
+<div class="log-count" id="log-count">0 puntos registrados</div>
+</div>
+<div class="card">
+<div class="card-label">🌡️ Temperatura vs Tiempo</div>
+<div class="chart-wrap"><canvas id="chart-temp"></canvas></div>
+</div>
+<div class="card">
+<div class="card-label">📈 Crecimiento (ratio ×) vs Tiempo</div>
+<div class="chart-wrap"><canvas id="chart-growth"></canvas></div>
+</div>
+<div class="card">
+<div class="card-label">Historial de sesiones</div>
+<div id="sessions-list"><div class="empty-state">No hay sesiones guardadas</div></div>
+</div>
+</div>
+<!-- ========== TAB: PROGRAMAS ========== -->
+<div class="tab-panel" id="tab-programs">
+<div class="prog-running-card" id="prog-running-card">
+<div class="prog-run-title" id="prog-run-name">—</div>
+<div class="prog-run-info">Etapa <span id="prog-run-stage">—</span> de <span id="prog-run-total">—</span>: <span id="prog-run-desc" style="color:var(--text)">—</span></div>
+<div class="prog-run-info">Tiempo restante: <span id="prog-run-rem" style="color:var(--text)">—</span></div>
+<div class="track" style="margin:8px 0"><div class="fill" id="prog-run-bar" style="width:0%"></div></div>
+<button class="btn-sm danger" style="width:100%;margin-top:6px" onclick="stopProgram()">⏹ Detener programa</button>
+</div>
+<div class="card">
+<div class="card-label">Editor de programa</div>
+<input class="session-inp" type="text" id="prog-name" placeholder="Nombre del programa" style="width:100%;margin-bottom:10px">
+<div id="stages-list"></div>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button class="btn-sm" onclick="addStage()">+ Etapa</button>
+<button class="btn-sm primary" onclick="saveProgram()">💾 Guardar</button>
+</div>
+</div>
+<div class="card">
+<div class="card-label">Programas guardados</div>
+<div id="programs-list"><div class="empty-state">No hay programas guardados</div></div>
+</div>
+</div>
 </div>
 <script>
-const DEVICE_ID   = 'proofbox01';
-const CMD_SECRET  = 'pb-b3ccb5';
-const BROKER_URL  = 'wss://broker.hivemq.com:8884/mqtt';
-const TOPIC_STATUS = `proofbox/${DEVICE_ID}/status`;
-const TOPIC_CMD    = `proofbox/${DEVICE_ID}/cmd`;
-const TOPIC_NOTIFY = `proofbox/${DEVICE_ID}/notify`;
+// ============================================================
+// CONFIG
+// ============================================================
+const DEVICE_ID='proofbox01';
+const CMD_SECRET='pb-b3ccb5';
+const BROKER_URL='wss://broker.hivemq.com:8884/mqtt';
+const TOPIC_STATUS='proofbox/'+DEVICE_ID+'/status';
+const TOPIC_CMD='proofbox/'+DEVICE_ID+'/cmd';
+const TOPIC_NOTIFY='proofbox/'+DEVICE_ID+'/notify';
+const MAX_LOG=500;
 
+// ============================================================
+// STATE
+// ============================================================
 let tHeat=28.0, tCold=4.0, mqttClient=null, lastMeta=0;
+let metaStartDist=null; // track start dist for cm growth
+let soundEnabled=true, alarmRunning=false, alarmSecondsLeft=0, alarmInterval=null;
+let audioCtx=null;
+let localUptimeStart=Date.now(), localUptimeInterval=null;
+let dataLog=[]; // {ts, temp, rise, dist}
+let tempChart=null, growthChart=null;
+let sessions=JSON.parse(localStorage.getItem('pb_sessions')||'[]');
+let programs=JSON.parse(localStorage.getItem('pb_programs')||'[]');
+let editorStages=[];
+let runningProgram=null; // {prog, stageIdx, stageStartTs, intervalId}
 
+// ============================================================
+// HELPERS
+// ============================================================
 function fmt(n,d=1){return parseFloat(n).toFixed(d);}
-function showToast(msg,dur=6000){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),dur);
+function fmtTime(secs){const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;return h>0?(h+'h'+String(m).padStart(2,'0')+'m'):(String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'));}
+function fmtTimeFull(secs){const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function showToast(msg,dur=6000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab){
+  ['control','charts','programs'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+    document.querySelectorAll('.nav-tab')[['control','charts','programs'].indexOf(t)].classList.toggle('active',t===tab);
+  });
+  if(tab==='charts'){setTimeout(()=>{if(tempChart)tempChart.update();if(growthChart)growthChart.update();},50);}
 }
+
+// ============================================================
+// DISPLAY MODES
+// ============================================================
 function setDMode(mode){
   document.getElementById('panel-ratio').style.display=mode==='ratio'?'block':'none';
   document.getElementById('panel-meta').style.display=mode==='meta'?'block':'none';
@@ -289,34 +451,123 @@ function setGoalTab(tab){
     document.getElementById('gtab-'+t).className='gtab'+(t===tab?' active':'');
   });
 }
+
+// ============================================================
+// TEMP CONTROLS
+// ============================================================
 function adjTemp(mode,delta){
   if(mode==='heat'){tHeat=Math.min(45,Math.max(15,tHeat+delta));sendCmd({cmd:'setTargetHeat',temp:tHeat});}
   else{tCold=Math.min(20,Math.max(-5,tCold+delta));sendCmd({cmd:'setTargetCold',temp:tCold});}
 }
 
+// ============================================================
+// MQTT
+// ============================================================
+function sendCmd(payload){
+  if(mqttClient&&mqttClient.connected)
+    mqttClient.publish(TOPIC_CMD,JSON.stringify({...payload,secret:CMD_SECRET}));
+}
+function connect(){
+  const cid='pb-app-'+Math.random().toString(16).substr(2,8);
+  mqttClient=mqtt.connect(BROKER_URL,{clientId:cid,clean:true,reconnectPeriod:3000});
+  mqttClient.on('connect',()=>{mqttClient.subscribe(TOPIC_STATUS);mqttClient.subscribe(TOPIC_NOTIFY);});
+  mqttClient.on('message',(t,msg)=>{
+    if(t===TOPIC_NOTIFY){
+      try{
+        const n=JSON.parse(msg.toString());
+        if(n.event==='meta_reached')showToast('🎉 ¡Meta alcanzada! '+fmt(n.ratio)+'× — modo frío en 10 min',10000);
+        if(n.event==='cold_mode_activated')showToast('❄️ Modo frío activado — objetivo '+fmt(n.targetCold)+'°C',8000);
+      }catch(e){}
+    }else{
+      try{const d=JSON.parse(msg.toString());updateUI(d);logData(d);}catch(e){}
+    }
+  });
+  mqttClient.on('disconnect',()=>setConnStatus(false));
+  mqttClient.on('offline',()=>setConnStatus(false));
+  mqttClient.on('error',()=>setConnStatus(false));
+}
+function setConnStatus(ok){
+  document.getElementById('dot').className='dot'+(ok?' ok':'');
+  document.getElementById('status-txt').textContent=ok?'Conectado':'Sin conexión';
+  document.getElementById('status-txt').style.color=ok?'var(--green)':'var(--red)';
+}
+
+// ============================================================
+// UPDATE UI
+// ============================================================
 function updateUI(d){
   document.getElementById('temp-big').textContent=fmt(d.temp);
   document.getElementById('target-heat').textContent=fmt(d.targetHeat);
   document.getElementById('target-cold').textContent=fmt(d.targetCold);
   tHeat=d.targetHeat; tCold=d.targetCold;
 
+  // track metaStartDist
+  if(d.metaStartSet&&metaStartDist===null)metaStartDist=d.dist;
+  if(!d.metaStartSet)metaStartDist=null;
+
   const isCold=d.activeMode==='cold';
   const isManual=d.manualOverride;
 
-  // Badge modo
-  const badge=document.getElementById('mode-badge');
   document.getElementById('temp-big').style.color=isCold?'#5dade2':'var(--amber-l)';
   document.getElementById('col-heat').className='temp-col'+((!isCold)?' active':'');
   document.getElementById('col-cold').className='temp-col'+(isCold?' active-cold':'');
 
-  if(d.coldTransPending){
-    badge.className='mode-badge trans';badge.textContent='⏳ Meta alcanzada — entrando en frío...';
-  }else if(isCold){
-    badge.className='mode-badge cold';badge.textContent=(isManual?'🔒 ':'')+'❄️ Modo Frío';
-    document.getElementById('temp-mode-lbl').textContent='actual · objetivo '+fmt(d.targetCold)+'°';
-  }else{
-    badge.className='mode-badge heat';badge.textContent=(isManual?'🔒 ':'')+'🔥 Modo Fermentación';
-    document.getElementById('temp-mode-lbl').textContent='actual · objetivo '+fmt(d.targetHeat)+'°';
+  const badge=document.getElementById('mode-badge');
+  if(d.coldTransPending){badge.className='mode-badge trans';badge.textContent='⏳ Meta alcanzada — entrando en frío...';}
+  else if(isCold){badge.className='mode-badge cold';badge.textContent=(isManual?'🔒 ':'')+'❄️ Modo Frío';document.getElementById('temp-mode-lbl').textContent='actual · objetivo '+fmt(d.targetCold)+'°';}
+  else{badge.className='mode-badge heat';badge.textContent=(isManual?'🔒 ':'')+'🔥 Modo Fermentación';document.getElementById('temp-mode-lbl').textContent='actual · objetivo '+fmt(d.targetHeat)+'°';}
+
+  // Growth
+  const rise=d.rise||1;
+  document.getElementById('rise').textContent=fmt(rise);
+  document.getElementById('rise-chip').textContent=fmt(rise)+'×';
+  document.getElementById('bar-ratio').style.width=Math.min(100,Math.max(0,((rise-1)/2)*100))+'%';
+
+  // cm crecidos
+  let cmGrown='--';
+  if(metaStartDist!==null&&d.dist!=null){
+    const cm=((metaStartDist-d.dist)/10);
+    cmGrown=(cm>=0?'+':'')+fmt(cm,1)+' cm';
+  }
+  document.getElementById('cm-chip').textContent=cmGrown;
+
+  // Meta progress
+  const mp=d.metaProgress||0;
+  document.getElementById('meta-pct').innerHTML=fmt(mp,0)+'<span>%</span>';
+  document.getElementById('bar-meta').style.width=mp+'%';
+  document.getElementById('bar-meta').className='fill'+(mp>=100?' done':'');
+  document.getElementById('meta-ratio-now').textContent=d.metaStartSet?fmt(d.metaRatioCurr)+'×':'--×';
+  document.getElementById('meta-ratio-goal').textContent=d.metaGoalSet?fmt(d.metaRatioGoal)+'×':'--×';
+  if(mp>=100&&lastMeta<100&&d.metaGoalSet){showToast('🎉 ¡La masa llegó a la meta! '+fmt(d.metaRatioCurr)+'×',10000);if('vibrate'in navigator)navigator.vibrate([300,100,300,100,300]);}
+  lastMeta=mp;
+
+  // Meta UI states
+  if(d.metaStartSet){
+    const g=d.metaGrams>0?' · '+d.metaGrams+'g':'';
+    document.getElementById('start-status').textContent='✓ Inicio marcado'+g;
+    document.getElementById('btn-start-sensor').className='mark-btn done';
+    document.getElementById('btn-start-finger').className='mark-btn done';
+  }else{document.getElementById('start-status').textContent='';document.getElementById('btn-start-sensor').className='mark-btn';document.getElementById('btn-start-finger').className='mark-btn';}
+  if(d.metaGoalSet){document.getElementById('goal-status').textContent='✓ Meta: '+fmt(d.metaRatioGoal)+'×';document.getElementById('btn-goal-finger').className='mark-btn done';}
+  else{document.getElementById('goal-status').textContent='';document.getElementById('btn-goal-finger').className='mark-btn';}
+
+  // Manual buttons
+  const hBtn=document.getElementById('btn-heat');const cBtn=document.getElementById('btn-cool');
+  if(isManual&&d.heat){hBtn.className='ctrl-btn on-heat locked';document.getElementById('heat-st').textContent='ENCENDIDO';}
+  else if(isManual&&d.cool){hBtn.className='ctrl-btn locked';document.getElementById('heat-st').textContent='APAGADO';}
+  else{hBtn.className='ctrl-btn'+(d.heat?' on-heat':'');document.getElementById('heat-st').textContent=d.heat?'ENCENDIDO':'APAGADO';}
+  if(isManual&&d.cool){cBtn.className='ctrl-btn on-cool locked';document.getElementById('cool-st').textContent='ENCENDIDO';}
+  else if(isManual&&d.heat){cBtn.className='ctrl-btn locked';document.getElementById('cool-st').textContent='APAGADO';}
+  else{cBtn.className='ctrl-btn'+(d.cool?' on-cool':'');document.getElementById('cool-st').textContent=d.cool?'ENCENDIDO':'APAGADO';}
+
+  document.getElementById('unlock-row').className='unlock-row'+(isManual?' show':'');
+
+  // Banner
+  const bw=document.getElementById('banner-coldwait');
+  bw.style.display=d.coldTransPending?'block':'none';
+  if(d.coldTransPending&&d.coldCountdown>0){
+    const mins=Math.floor(d.coldCountdown/60),secs=d.coldCountdown%60;
+    document.getElementById('cold-countdown').textContent=mins>0?mins+'m '+secs+'s':secs+'s';
   }
 
   // Info
@@ -324,128 +575,310 @@ function updateUI(d){
   document.getElementById('rssi').textContent=d.rssi+'dB';
   const s=Math.floor(d.uptime),h=Math.floor(s/3600),m=Math.floor((s%3600)/60);
   document.getElementById('uptime').textContent=h+'h'+String(m).padStart(2,'0');
+  document.getElementById('uptime-device').textContent=fmtTimeFull(Math.floor(d.uptime));
 
-  // Ratio
-  document.getElementById('rise').textContent=fmt(d.rise);
-  document.getElementById('bar-ratio').style.width=Math.min(100,Math.max(0,((d.rise-1)/2)*100))+'%';
-
-  // Meta
-  const mp=d.metaProgress||0;
-  document.getElementById('meta-pct').innerHTML=fmt(mp,0)+'<span>%</span>';
-  document.getElementById('bar-meta').style.width=mp+'%';
-  document.getElementById('bar-meta').className='fill'+(mp>=100?' done':'');
-  document.getElementById('meta-ratio-now').textContent=d.metaStartSet?fmt(d.metaRatioCurr)+'×':'--×';
-  document.getElementById('meta-ratio-goal').textContent=d.metaGoalSet?fmt(d.metaRatioGoal)+'×':'--×';
-  if(mp>=100&&lastMeta<100&&d.metaGoalSet){
-    showToast('🎉 ¡La masa llegó a la meta! '+fmt(d.metaRatioCurr)+'×',10000);
-    if('vibrate'in navigator)navigator.vibrate([300,100,300,100,300]);
-  }
-  lastMeta=mp;
-
-  // Meta inicio/meta estados
-  if(d.metaStartSet){
-    const g=d.metaGrams>0?` · ${d.metaGrams}g`:'';
-    document.getElementById('start-status').textContent='✓ Inicio marcado'+g;
-    document.getElementById('btn-start-sensor').className='mark-btn done';
-    document.getElementById('btn-start-finger').className='mark-btn done';
-  }else{
-    document.getElementById('start-status').textContent='';
-    document.getElementById('btn-start-sensor').className='mark-btn';
-    document.getElementById('btn-start-finger').className='mark-btn';
-  }
-  if(d.metaGoalSet){
-    document.getElementById('goal-status').textContent='✓ Meta: '+fmt(d.metaRatioGoal)+'×';
-    document.getElementById('btn-goal-finger').className='mark-btn done';
-  }else{
-    document.getElementById('goal-status').textContent='';
-    document.getElementById('btn-goal-finger').className='mark-btn';
-  }
-
-  // Botones calor/frío con candado
-  const hBtn=document.getElementById('btn-heat');
-  const cBtn=document.getElementById('btn-cool');
-
-  if(isManual&&d.heat){
-    hBtn.className='ctrl-btn on-heat locked';
-    document.getElementById('heat-st').textContent='ENCENDIDO';
-  }else if(isManual&&d.cool){
-    hBtn.className='ctrl-btn locked';
-    document.getElementById('heat-st').textContent='APAGADO';
-  }else{
-    hBtn.className='ctrl-btn'+(d.heat?' on-heat':'');
-    document.getElementById('heat-st').textContent=d.heat?'ENCENDIDO':'APAGADO';
-  }
-
-  if(isManual&&d.cool){
-    cBtn.className='ctrl-btn on-cool locked';
-    document.getElementById('cool-st').textContent='ENCENDIDO';
-  }else if(isManual&&d.heat){
-    cBtn.className='ctrl-btn locked';
-    document.getElementById('cool-st').textContent='APAGADO';
-  }else{
-    cBtn.className='ctrl-btn'+(d.cool?' on-cool':'');
-    document.getElementById('cool-st').textContent=d.cool?'ENCENDIDO':'APAGADO';
-  }
-
-  // Fila unlock
-  document.getElementById('unlock-row').className='unlock-row'+(isManual?' show':'');
-
-  // Banner transición frío
-  const bw=document.getElementById('banner-coldwait');
-  bw.style.display=d.coldTransPending?'block':'none';
-  if(d.coldTransPending&&d.coldCountdown>0){
-    const mins=Math.floor(d.coldCountdown/60),secs=d.coldCountdown%60;
-    document.getElementById('cold-countdown').textContent=mins>0?`${mins}m ${secs}s`:`${secs}s`;
-  }
-
-  document.getElementById('dot').className='dot ok';
-  document.getElementById('status-txt').textContent='Conectado';
-  document.getElementById('status-txt').style.color='var(--green)';
+  setConnStatus(true);
 }
 
-function sendCmd(payload){
-  if(mqttClient&&mqttClient.connected)
-    mqttClient.publish(TOPIC_CMD,JSON.stringify({...payload,secret:CMD_SECRET}));
-}
-
-function markStart(){
-  const g=parseFloat(document.getElementById('input-grams').value)||0;
-  sendCmd({cmd:'metaSetStart',grams:g});
-  document.getElementById('start-status').textContent='⏳ Marcando...';
-}
+// ============================================================
+// META COMMANDS
+// ============================================================
+function markStart(){const g=parseFloat(document.getElementById('input-grams').value)||0;sendCmd({cmd:'metaSetStart',grams:g});document.getElementById('start-status').textContent='⏳ Marcando...';}
 function setGoalFinger(){sendCmd({cmd:'metaSetGoalFinger'});document.getElementById('goal-status').textContent='⏳ Leyendo...';}
-function setGoalRatio(){
-  const r=parseFloat(document.getElementById('input-ratio').value);
-  if(!r||r<=1||r>5){document.getElementById('goal-status').textContent='⚠️ Ratio entre 1.1 y 5';return;}
-  sendCmd({cmd:'metaSetGoalRatio',ratio:r});document.getElementById('goal-status').textContent='⏳ Aplicando...';
-}
-function setGoalCm(){
-  const cm=parseFloat(document.getElementById('input-cm').value);
-  if(!cm||cm<=0){document.getElementById('goal-status').textContent='⚠️ Escribe los cm';return;}
-  sendCmd({cmd:'metaSetGoalCm',cm});document.getElementById('goal-status').textContent='⏳ Aplicando...';
-}
+function setGoalRatio(){const r=parseFloat(document.getElementById('input-ratio').value);if(!r||r<=1||r>5){document.getElementById('goal-status').textContent='⚠️ Ratio entre 1.1 y 5';return;}sendCmd({cmd:'metaSetGoalRatio',ratio:r});document.getElementById('goal-status').textContent='⏳ Aplicando...';}
+function setGoalCm(){const cm=parseFloat(document.getElementById('input-cm').value);if(!cm||cm<=0){document.getElementById('goal-status').textContent='⚠️ Escribe los cm';return;}sendCmd({cmd:'metaSetGoalCm',cm});document.getElementById('goal-status').textContent='⏳ Aplicando...';}
 function resetMeta(){if(confirm('¿Resetear inicio y meta?'))sendCmd({cmd:'metaReset'});}
 
-function connect(){
-  const cid='pb-app-'+Math.random().toString(16).substr(2,8);
-  mqttClient=mqtt.connect(BROKER_URL,{clientId:cid,clean:true,reconnectPeriod:3000});
-  mqttClient.on('connect',()=>{mqttClient.subscribe(TOPIC_STATUS);mqttClient.subscribe(TOPIC_NOTIFY);});
-  mqttClient.on('message',(t,msg)=>{
-    if(t===TOPIC_NOTIFY){
-      try{const n=JSON.parse(msg.toString());
-        if(n.event==='meta_reached')showToast('🎉 ¡Meta alcanzada! '+fmt(n.ratio)+'× — modo frío en 10 min',10000);
-        if(n.event==='cold_mode_activated')showToast('❄️ Modo frío activado — objetivo '+fmt(n.targetCold)+'°C',8000);
-      }catch(e){}
-    }else{
-      try{updateUI(JSON.parse(msg.toString()));}catch(e){}
+// ============================================================
+// LOCAL UPTIME TIMER
+// ============================================================
+function startLocalUptime(){
+  localUptimeStart=Date.now();
+  if(localUptimeInterval)clearInterval(localUptimeInterval);
+  localUptimeInterval=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-localUptimeStart)/1000);
+    document.getElementById('uptime-local-display').textContent=fmtTimeFull(elapsed);
+  },1000);
+}
+startLocalUptime();
+
+// ============================================================
+// ALARM
+// ============================================================
+function alarmToggle(){
+  if(alarmRunning){alarmStop();return;}
+  const mins=parseInt(document.getElementById('alarm-mins').value)||0;
+  if(mins<=0){showToast('⚠️ Escribe los minutos');return;}
+  alarmSecondsLeft=mins*60;
+  alarmRunning=true;
+  document.getElementById('alarm-btn').textContent='⏸ Detener';
+  updateAlarmDisplay();
+  alarmInterval=setInterval(()=>{
+    alarmSecondsLeft--;
+    updateAlarmDisplay();
+    if(alarmSecondsLeft<=0){alarmFire();}
+  },1000);
+}
+function alarmStop(){
+  alarmRunning=false;
+  if(alarmInterval)clearInterval(alarmInterval);
+  alarmInterval=null;
+  document.getElementById('alarm-btn').textContent='▶ Iniciar';
+  document.getElementById('alarm-display').classList.remove('alarm-ring');
+}
+function updateAlarmDisplay(){
+  const m=Math.floor(alarmSecondsLeft/60),s=alarmSecondsLeft%60;
+  document.getElementById('alarm-display').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function alarmFire(){
+  alarmStop();
+  document.getElementById('alarm-display').classList.add('alarm-ring');
+  document.getElementById('alarm-display').textContent='00:00';
+  showToast('⏰ ¡Tiempo cumplido!',10000);
+  if('vibrate'in navigator)navigator.vibrate([500,200,500,200,500]);
+  if(soundEnabled)playAlarmSound();
+}
+function playAlarmSound(){
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const freqs=[880,660,880,660];
+    freqs.forEach((f,i)=>{
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.connect(gain);gain.connect(audioCtx.destination);
+      osc.frequency.value=f;osc.type='sine';
+      gain.gain.setValueAtTime(0.3,audioCtx.currentTime+i*0.3);
+      gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.3+0.25);
+      osc.start(audioCtx.currentTime+i*0.3);
+      osc.stop(audioCtx.currentTime+i*0.3+0.25);
+    });
+  }catch(e){}
+}
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  document.getElementById('sound-btn').textContent=soundEnabled?'🔔':'🔇';
+  document.getElementById('sound-btn').title=soundEnabled?'Silencio':'Activar sonido';
+}
+
+// ============================================================
+// RESETS
+// ============================================================
+function doResetGeneral(){
+  if(!confirm('¿Reset general? Reinicia timer local, cm crecidos y meta.'))return;
+  startLocalUptime();
+  metaStartDist=null;
+  document.getElementById('cm-chip').textContent='-- cm';
+  sendCmd({cmd:'metaReset'});
+  showToast('🔄 Reset general ejecutado');
+}
+function doResetTimer(){
+  startLocalUptime();
+  showToast('⏱ Timer reiniciado');
+}
+
+// ============================================================
+// DATA LOG & CHARTS
+// ============================================================
+function logData(d){
+  if(dataLog.length>=MAX_LOG)dataLog.shift();
+  dataLog.push({ts:Date.now(),temp:d.temp,rise:d.rise||1,dist:d.dist||0});
+  document.getElementById('log-count').textContent=dataLog.length+' puntos registrados';
+  updateCharts();
+}
+function clearLog(){
+  if(!confirm('¿Limpiar log de datos actual?'))return;
+  dataLog=[];
+  document.getElementById('log-count').textContent='0 puntos registrados';
+  updateCharts();
+}
+function getChartLabels(){
+  if(dataLog.length===0)return[];
+  const t0=dataLog[0].ts;
+  return dataLog.map(p=>{const s=Math.floor((p.ts-t0)/1000);return fmtTime(s);});
+}
+function updateCharts(){
+  const labels=getChartLabels();
+  if(tempChart){tempChart.data.labels=labels;tempChart.data.datasets[0].data=dataLog.map(p=>p.temp);tempChart.update('none');}
+  if(growthChart){growthChart.data.labels=labels;growthChart.data.datasets[0].data=dataLog.map(p=>p.rise);growthChart.update('none');}
+}
+function initCharts(){
+  const chartOpts=(label,color)=>({
+    type:'line',
+    data:{labels:[],datasets:[{label,data:[],borderColor:color,borderWidth:2,pointRadius:0,fill:false,tension:0.3}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#7a7268',font:{size:9},maxTicksLimit:6},grid:{color:'rgba(46,43,38,0.8)'},border:{color:'#2e2b26'}},
+        y:{ticks:{color:'#7a7268',font:{size:9}},grid:{color:'rgba(46,43,38,0.8)'},border:{color:'#2e2b26'}}
+      }
     }
   });
-  mqttClient.on('disconnect',()=>{
-    document.getElementById('dot').className='dot';
-    document.getElementById('status-txt').textContent='Sin conexión';
-    document.getElementById('status-txt').style.color='var(--red)';
-  });
+  const ctxT=document.getElementById('chart-temp').getContext('2d');
+  tempChart=new Chart(ctxT,chartOpts('Temp °C','#f0a832'));
+  const ctxG=document.getElementById('chart-growth').getContext('2d');
+  growthChart=new Chart(ctxG,chartOpts('Ratio ×','#27ae60'));
 }
+
+// ============================================================
+// SESSION HISTORY
+// ============================================================
+function saveSession(){
+  const name=document.getElementById('session-name').value.trim()||'Sesión '+new Date().toLocaleDateString();
+  if(dataLog.length===0){showToast('⚠️ No hay datos para guardar');return;}
+  const session={id:Date.now(),name,date:new Date().toLocaleString(),data:[...dataLog]};
+  sessions.unshift(session);
+  if(sessions.length>20)sessions.pop();
+  localStorage.setItem('pb_sessions',JSON.stringify(sessions));
+  renderSessions();
+  showToast('💾 Sesión "'+name+'" guardada');
+}
+function deleteSession(id){
+  if(!confirm('¿Eliminar sesión?'))return;
+  sessions=sessions.filter(s=>s.id!==id);
+  localStorage.setItem('pb_sessions',JSON.stringify(sessions));
+  renderSessions();
+}
+function loadSession(id){
+  const s=sessions.find(x=>x.id===id);
+  if(!s)return;
+  dataLog=[...s.data];
+  document.getElementById('log-count').textContent=dataLog.length+' puntos';
+  updateCharts();
+  switchTab('charts');
+  showToast('📂 Sesión "'+s.name+'" cargada');
+}
+function renderSessions(){
+  const el=document.getElementById('sessions-list');
+  if(sessions.length===0){el.innerHTML='<div class="empty-state">No hay sesiones guardadas</div>';return;}
+  el.innerHTML=sessions.map(s=>'<div class="hist-item"><div class="hist-info"><div class="hi-name">'+s.name+'</div><div class="hi-date">'+s.date+' · '+s.data.length+' pts</div></div><div class="hist-actions"><button class="btn-xs" onclick="loadSession('+s.id+')">📂</button><button class="btn-xs del" onclick="deleteSession('+s.id+')">🗑</button></div></div>').join('');
+}
+
+// ============================================================
+// CSV EXPORT
+// ============================================================
+function exportCSV(){
+  if(dataLog.length===0){showToast('⚠️ No hay datos');return;}
+  const t0=dataLog[0].ts;
+  let csv='tiempo_s,temperatura_C,ratio_x,distancia_mm\n';
+  dataLog.forEach(p=>{csv+=Math.floor((p.ts-t0)/1000)+','+p.temp+','+p.rise+','+p.dist+'\n';});
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='proofbox_'+Date.now()+'.csv';a.click();
+}
+
+// ============================================================
+// PROGRAMS EDITOR
+// ============================================================
+function addStage(){
+  editorStages.push({temp:28,duration:60,mode:'heat'});
+  renderStages();
+}
+function removeStage(i){
+  editorStages.splice(i,1);
+  renderStages();
+}
+function renderStages(){
+  const el=document.getElementById('stages-list');
+  if(editorStages.length===0){el.innerHTML='<div class="empty-state">Sin etapas. Pulsa + Etapa</div>';return;}
+  el.innerHTML=editorStages.map((st,i)=>'<div class="stage-item" id="stage-'+i+'"><div class="stage-hdr"><span class="stage-num-lbl">Etapa '+(i+1)+'</span><button class="btn-xs del" onclick="removeStage('+i+')">✕</button></div><div class="stage-form"><input class="stage-inp w60" type="number" value="'+st.temp+'" placeholder="°C" oninput="editorStages['+i+'].temp=parseFloat(this.value)||0"><span style="font-size:11px;color:var(--muted)">°C</span><input class="stage-inp w70" type="number" value="'+st.duration+'" placeholder="min" oninput="editorStages['+i+'].duration=parseInt(this.value)||0"><span style="font-size:11px;color:var(--muted)">min</span><select class="stage-sel" onchange="editorStages['+i+'].mode=this.value"><option value="heat"'+(st.mode==='heat'?' selected':'')+'>🔥 Calor</option><option value="cold"'+(st.mode==='cold'?' selected':'')+'>❄️ Frío</option></select></div></div>').join('');
+}
+function saveProgram(){
+  const name=document.getElementById('prog-name').value.trim();
+  if(!name){showToast('⚠️ Escribe un nombre');return;}
+  if(editorStages.length===0){showToast('⚠️ Agrega al menos una etapa');return;}
+  const prog={id:Date.now(),name,stages:[...editorStages]};
+  programs.unshift(prog);
+  if(programs.length>20)programs.pop();
+  localStorage.setItem('pb_programs',JSON.stringify(programs));
+  renderPrograms();
+  showToast('💾 Programa "'+name+'" guardado');
+}
+function deleteProgram(id){
+  if(!confirm('¿Eliminar programa?'))return;
+  programs=programs.filter(p=>p.id!==id);
+  localStorage.setItem('pb_programs',JSON.stringify(programs));
+  renderPrograms();
+}
+function renderPrograms(){
+  const el=document.getElementById('programs-list');
+  if(programs.length===0){el.innerHTML='<div class="empty-state">No hay programas guardados</div>';return;}
+  el.innerHTML=programs.map(p=>'<div class="prog-item"><div class="prog-item-info"><div class="pi-name">'+p.name+'</div><div class="pi-stages">'+p.stages.length+' etapas · '+p.stages.map(s=>s.temp+'° '+s.duration+'min').join(' → ')+'</div></div><div class="prog-item-actions"><button class="btn-xs" onclick="loadProgram('+p.id+')">▶ Cargar</button><button class="btn-xs del" onclick="deleteProgram('+p.id+')">🗑</button></div></div>').join('');
+}
+function loadProgram(id){
+  const p=programs.find(x=>x.id===id);
+  if(!p)return;
+  editorStages=[...p.stages.map(s=>({...s}))];
+  document.getElementById('prog-name').value=p.name;
+  renderStages();
+  showToast('📂 Programa "'+p.name+'" cargado en editor');
+}
+
+// ============================================================
+// PROGRAM RUNNER
+// ============================================================
+function startProgram(prog){
+  if(runningProgram){stopProgram();}
+  runningProgram={prog,stageIdx:0,stageStartTs:Date.now()};
+  applyStage(0);
+  runningProgram.intervalId=setInterval(progTick,1000);
+  document.getElementById('prog-running-card').classList.add('show');
+  showToast('▶ Programa "'+prog.name+'" iniciado');
+}
+function applyStage(idx){
+  if(!runningProgram)return;
+  const stage=runningProgram.prog.stages[idx];
+  if(!stage)return;
+  if(stage.mode==='heat')sendCmd({cmd:'setTargetHeat',temp:stage.temp});
+  else sendCmd({cmd:'setTargetCold',temp:stage.temp});
+  runningProgram.stageStartTs=Date.now();
+  updateProgUI();
+}
+function progTick(){
+  if(!runningProgram)return;
+  const stage=runningProgram.prog.stages[runningProgram.stageIdx];
+  if(!stage){stopProgram();showToast('✅ Programa completado');return;}
+  const elapsed=Math.floor((Date.now()-runningProgram.stageStartTs)/1000);
+  const total=stage.duration*60;
+  if(elapsed>=total){
+    runningProgram.stageIdx++;
+    if(runningProgram.stageIdx>=runningProgram.prog.stages.length){stopProgram();showToast('✅ Programa completado');return;}
+    applyStage(runningProgram.stageIdx);
+    showToast('⏭ Etapa '+(runningProgram.stageIdx+1)+' de '+runningProgram.prog.stages.length);
+  }
+  updateProgUI();
+}
+function stopProgram(){
+  if(!runningProgram)return;
+  clearInterval(runningProgram.intervalId);
+  runningProgram=null;
+  document.getElementById('prog-running-card').classList.remove('show');
+}
+function updateProgUI(){
+  if(!runningProgram)return;
+  const {prog,stageIdx,stageStartTs}=runningProgram;
+  const stage=prog.stages[stageIdx];if(!stage)return;
+  document.getElementById('prog-run-name').textContent=prog.name;
+  document.getElementById('prog-run-stage').textContent=stageIdx+1;
+  document.getElementById('prog-run-total').textContent=prog.stages.length;
+  document.getElementById('prog-run-desc').textContent=stage.temp+'°C '+stage.duration+'min '+(stage.mode==='heat'?'🔥':'❄️');
+  const elapsed=Math.floor((Date.now()-stageStartTs)/1000);
+  const total=stage.duration*60;
+  const rem=Math.max(0,total-elapsed);
+  document.getElementById('prog-run-rem').textContent=fmtTime(rem);
+  // total program progress
+  const totalSecs=prog.stages.reduce((a,s)=>a+s.duration*60,0);
+  const doneSecs=prog.stages.slice(0,stageIdx).reduce((a,s)=>a+s.duration*60,0)+elapsed;
+  document.getElementById('prog-run-bar').style.width=Math.min(100,(doneSecs/totalSecs*100))+'%';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderStages();
+renderPrograms();
+renderSessions();
+initCharts();
 connect();
 </script>
 </body>
